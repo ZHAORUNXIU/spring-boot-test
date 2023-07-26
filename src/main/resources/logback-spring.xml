@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="KAFKA-GATEWAY" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+        <encoder class="com.github.danielwegener.logback.kafka.encoding.PatternLayoutKafkaMessageEncoder">
+            <layout class="net.logstash.logback.layout.LogstashLayout">
+                <customFields>{"app":"${spring.application.name}"}</customFields>
+            </layout>
+        </encoder>
+
+        <topic>test-gateway</topic>
+        <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.RoundRobinKeyingStrategy"/>
+        <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
+        <producerConfig>bootstrap.servers=127.0.0.1:9093,127.0.0.1:9094,127.0.0.1:9095</producerConfig>
+<!--        <producerConfig>bootstrap.servers=kafka1:9093,kafka2:9094,kafka3:9095</producerConfig>-->
+        <producerConfig>linger.ms=1000</producerConfig>
+
+        <!-- this is the fallback appender if kafka is not available -->
+        <appender-ref ref="CONSOLE"/>
+    </appender>
+
+    <appender name="KAFKA-SERVICE" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+        <encoder class="com.github.danielwegener.logback.kafka.encoding.PatternLayoutKafkaMessageEncoder">
+            <layout class="net.logstash.logback.layout.LogstashLayout">
+                <customFields>{"app":"${spring.application.name}"}</customFields>
+            </layout>
+        </encoder>
+
+        <topic>test-service</topic>
+        <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.RoundRobinKeyingStrategy"/>
+        <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
+        <producerConfig>bootstrap.servers=${LOG_KAFKA_SERVERS}</producerConfig>
+        <producerConfig>linger.ms=1000</producerConfig>
+
+        <!-- this is the fallback appender if kafka is not available -->
+        <appender-ref ref="CONSOLE"/>
+    </appender>
+
+    <!-- additivity="false" 当前记录器将仅处理与其关联的日志消息，不会将消息传递给其父级记录器，避免日志消息重复记录。-->
+<!--    <logger name="com.x.test.gateway" level="INFO" additivity="false">-->
+<!--        <appender-ref ref="KAFKA-GATEWAY"/>-->
+<!--    </logger>-->
+
+<!--    <logger name="com.x.test.service" level="INFO" additivity="false">-->
+<!--        <appender-ref ref="KAFKA-SERVICE"/>-->
+<!--    </logger>-->
+
+    <logger name="org.apache.zookeeper" level="WARN" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- 顶级的日志记录器，负责接收并处理所有未被其他具体记录器处理的日志消息。-->
+    <root level="info">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

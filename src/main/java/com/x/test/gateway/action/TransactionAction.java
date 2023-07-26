@@ -1,8 +1,10 @@
 package com.x.test.gateway.action;
 
 import com.x.test.api.model.domain.user.UserMongoDO;
-import com.x.test.common.model.Result;
 import com.x.test.api.service.user.UserService;
+import com.x.test.client.api.explorer.ExplorerClient;
+import com.x.test.client.model.explorer.vo.TransactionHistoryVO;
+import com.x.test.common.model.Result;
 import com.x.test.common.util.Log;
 import com.x.test.gateway.model.req.AddUserReq;
 import io.swagger.annotations.Api;
@@ -18,34 +20,37 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
-@RequestMapping(value = "/v1/user")
+@RequestMapping(value = "/v1/transaction")
 @Validated
 @Component
-@Api(tags = "User API", description = "API endpoints for managing users")
-public class UserAction {
+@Api(tags = "Transaction API", description = "API endpoints for managing transaction")
+public class TransactionAction {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UserAction.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionAction.class);
 
     @Resource
-    private UserService userService;
+    private ExplorerClient explorerClient;
 
     /**
      * mongo test: Add to MongoDB
      */
-    @PostMapping("/add")
-    @ApiOperation(value = " insert a new user", response = Result.class)
-    public Result<String> add(@Validated @RequestBody AddUserReq req) {
-        UserMongoDO userDO = new UserMongoDO();
-        BeanUtils.copyProperties(req, userDO);
-        Result<String> result = userService.add(userDO);
+    @PostMapping("/history")
+    @ApiOperation(value = " get transaction history from explorer Client", response = Result.class)
+    public Result<List<TransactionHistoryVO>> getHistory() {
 
-        LOG.info(Log.format("Done", Log.kv("userId", result.getData())));
+        Result<List<TransactionHistoryVO>> result = explorerClient.getTransactionHistory();
+
+        LOG.info(Log.format("Done", Log.kv("success:", result.isSuccess())));
 
         if (!result.isSuccess()) {
             return Result.failure(result);
         }
+
+        LOG.info(Log.format("success", Log.kv("size:", result.getData().size())));
+
         return Result.success(result.getData());
     }
 }
